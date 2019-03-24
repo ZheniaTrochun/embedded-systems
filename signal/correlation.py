@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import math
 import random
+from datetime import datetime
 
 n = 12
 N = 64
@@ -36,43 +37,57 @@ def generate_full_signal(n, N, w):
     return combine(harmonics)
 
 
-def Rxy(x, mx, y, my, number):
-    return sum(
-        [correlation_partial(x[i], mx, y[i], my) for i in range(0, number)]
-    ) / (number - 1)
+def correlation(x, y, tau):
+	mx = Mx(x)
+	my = Mx(y)
+	return sum([correlation_partial(x[i], mx, y[i + tau], my) for i in range(0, len(x))]) / (len(x) - 1)
 
 
-def Rxx(x, mx, shift, number):
-    return sum(
-        [correlation_partial(x[i], mx, x[i + shift], mx) for i in range(0, number - shift)]
-    ) / (number - shift - 1)
+def Rxy(x, y):
+	return [(correlation(x[:int(N / 2)], y, tau)) for tau in range(0, int(N / 2))]
 
 
 def correlation_partial(xi, mx, yi, my):
     return (xi - mx) * (yi - my)
 
 
+start = datetime.now().microsecond / 1000.0
+
 x = generate_full_signal(n, N, w)
-mx = Mx(x)
-rxx = Rxx(x, mx, 1, N)
 
 y = generate_full_signal(n, N, w)
-my = Mx(y)
 
-rxy = Rxy(x, mx, y, my, N)
+rxx = Rxy(x, x)
+ryy = Rxy(y, y)
+rxy = Rxy(x, y)
 
-print("Rxx = " + str(rxx))
-print("Rxy = " + str(rxy))
+end = datetime.now().microsecond / 1000.0
 
-x_axis = range(0, N)
+print("T = " + str(end - start) + "ms")
+
+x_axis = range(0, int(N/2))
+
+# plt.plot(x_axis, rxx)
+# plt.show()
+#
+# plt.plot(x_axis, ryy)
+# plt.show()
+#
+# plt.plot(x_axis, rxy)
+# plt.show()
+
 fig = plt.figure()
 
-x_plot = fig.add_subplot(2, 1, 1)
+x_plot = fig.add_subplot(3, 1, 1)
 x_plot.grid(True)
-x_plot.plot(x_axis, x)
+x_plot.plot(x_axis, rxx)
 
-y_plot = fig.add_subplot(2, 1, 2)
+y_plot = fig.add_subplot(3, 1, 2)
 y_plot.grid(True)
-y_plot.plot(x_axis, y)
+y_plot.plot(x_axis, ryy)
+
+xy_plot = fig.add_subplot(3, 1, 3)
+xy_plot.grid(True)
+xy_plot.plot(x_axis, rxy)
 
 plt.show()
